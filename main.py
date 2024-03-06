@@ -12,23 +12,21 @@ class Player(object):
         self.image = pygame.transform.scale(self.image, (30, 30))
         self.x_vel = 0
         self.y_vel = 0
-        # self.speed = 1
         self.sprite = self.image.subsurface(self.image.get_rect())
-        # self.sprite = (self.image.subsurface(pygame.Rect(0, 0, 20, 20)))
-        # print(self.sprite)
-        # print(self.image.get_rect())
-
 
     def draw(self, screen):
         screen.blit(self.sprite, (self.x, self.y))
+        pygame.draw.rect(
+            screen,
+            pygame.Color('black'),
+            pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height()),
+            2
+        )
 
-    def movement(self, HEIGHT, WIDTH):
-        starting_vel = 3
-        acceleration = 0.7
-        friction = 0.35
-        self.keys = pygame.key.get_pressed()
+    def key_handling(self, starting_vel, acceleration):
+        keys = pygame.key.get_pressed()
 
-        if self.keys[pygame.K_a]:
+        if keys[pygame.K_a]:
             if self.x_vel <= -starting_vel+1:
                 self.x_vel -= acceleration
             elif self.x_vel > 0:
@@ -36,7 +34,7 @@ class Player(object):
             else:
                 self.x_vel = -starting_vel
 
-        if self.keys[pygame.K_d]:
+        if keys[pygame.K_d]:
             if self.x_vel >= starting_vel-1:
                 self.x_vel += acceleration
             elif self.x_vel < 0:
@@ -44,7 +42,7 @@ class Player(object):
             else:
                 self.x_vel = starting_vel
 
-        if self.keys[pygame.K_w]:
+        if keys[pygame.K_w]:
             if self.y_vel <= -starting_vel+1:
                 self.y_vel -= acceleration
             elif self.y_vel > 0:
@@ -52,7 +50,7 @@ class Player(object):
             else:
                 self.y_vel = -starting_vel
 
-        if self.keys[pygame.K_s]:
+        if keys[pygame.K_s]:
             if self.y_vel >= starting_vel-1:
                 self.y_vel += acceleration
             elif self.y_vel < 0:
@@ -60,42 +58,101 @@ class Player(object):
             else:
                 self.y_vel = starting_vel
 
-        # BUG with velocity
+    def friction_handler(self, friction):
+
         if self.x_vel > 0:
-            self.x_vel -= friction
+            if self.x_vel - friction < 0:
+                self.x_vel = 0
+            else:
+                self.x_vel -= friction
         elif self.x_vel < 0:
-            self.x_vel += friction
+            if self.x_vel + friction > 0:
+                self.x_vel = 0
+            else:
+                self.x_vel += friction
 
         if self.y_vel > 0:
-            self.y_vel -= friction
+            if self.y_vel - friction < 0:
+                self.y_vel = 0
+            else:
+                self.y_vel -= friction
         elif self.y_vel < 0:
-            self.y_vel += friction
+            if self.y_vel + friction > 0:
+                self.y_vel = 0
+            else:
+                self.y_vel += friction
 
-        self.x += self.x_vel
-        self.y += self.y_vel
+        print(f'Y velocity: {self.y_vel}')
+        print(f'X velocity: {self.x_vel}')
 
+    def border_colission(self, HEIGHT, WIDTH):
+        # TOP
         if self.y < 0:
             self.y_vel = 0
             self.y = 0
 
+        # BOTTOM
         if self.y + self.image.get_height() > HEIGHT:
             self.y_vel = 0
             self.y = HEIGHT - self.image.get_height()
 
+        # LEFT
         if self.x < 0:
             self.x_vel = 0
             self.x = 0
 
+        # RIGHT
         if self.x + self.image.get_width() > WIDTH:
             self.x_vel = 0
             self.x = WIDTH - self.image.get_width()
 
+    def movement(self, HEIGHT, WIDTH):
+        starting_vel = 3
+        acceleration = 0.8
+        friction = 0.4
+
+        self.key_handling(starting_vel, acceleration)
+        self.friction_handler(friction)
+
+        self.x += self.x_vel
+        self.y += self.y_vel
+
+        self.border_colission(HEIGHT, WIDTH)
+
+class World(object):
+    def __init__(self):
+        self.objects_list = []
+
+    def add_object(self, object):
+        self.objects_list.append(object)
+
+    def draw(self, screen):
+        for world_object in self.objects_list:
+            world_object.draw(screen)
+
+
+class World_object(object):
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.rectangle = pygame.Rect(self.x, self.y, self.width, self.height)
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, pygame.Color('black'), self.rectangle)
+
+
 class MainRun(object):
     def __init__(self):
         self.FPS = 60
-        self.WIDTH = 1000
-        self.HEIGHT = 1000
+        self.WIDTH = 800
+        self.HEIGHT = 800
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+        self.world = World()
+        # self.world_object =
+        self.world.add_object(World_object(10, 10, 100, 100))
+        self.world.add_object(World_object(400, 120, 100, 100))
         self.player = Player(100, 100, 150, 150)
         self.clock = pygame.time.Clock()
 
@@ -109,16 +166,19 @@ class MainRun(object):
         run = True
         while run:
             self.screen.fill((255, 255, 255))
-            self.show_fps()
+
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     run = False
                     break
 
+            # self.world_object.draw(self.screen)
             self.player.draw(self.screen)
             self.player.movement(self.HEIGHT, self.WIDTH)
+            self.world.draw(self.screen)
             # print(self.player.x)
+            self.show_fps()
             pygame.display.update()
             self.clock.tick(self.FPS)
         pygame.quit()
