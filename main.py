@@ -111,32 +111,41 @@ class Player(object):
 
     def objects_collision(self):
         for world_object in self.world.objects_list:
-            collision = [False, False]
-            obj_left = world_object.rectangle.left
-            obj_right = world_object.rectangle.right
-            obj_top = world_object.rectangle.top
-            obj_bottom = world_object.rectangle.bottom
-
-            player_collision_points = {}
-            player_collision_points['x'] = [self.x, self.x+self.image.get_width()]
-            player_collision_points['y'] = [self.y, self.y+self.image.get_height()]
-            # print(f'Player: {player_collision_points["x"]}')
-            # print(f'Object: {[obj_left, obj_right]}')
-
-            for point_x in player_collision_points['x']:
-                if obj_left < point_x < obj_right:
-                    collision[0] = True
-            for point_y in player_collision_points['y']:
-                if obj_top < point_y < obj_bottom:
-                    collision[1] = True
-            # print(collision)
-            if collision[0] and collision[1]:
+            # New Collision
+            image_rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
+            if image_rect.colliderect(world_object.rectangle):
                 self.x_vel *= -1.2
                 self.y_vel *= -1.2
 
-                # self.x = 400
-                # self.y = 400
-                print("collision")
+
+            # Old Collision
+
+            # collision = [False, False]
+            # obj_left = world_object.rectangle.left
+            # obj_right = world_object.rectangle.right
+            # obj_top = world_object.rectangle.top
+            # obj_bottom = world_object.rectangle.bottom
+            #
+            # player_collision_points = {}
+            # player_collision_points['x'] = [self.x, self.x+self.image.get_width()]
+            # player_collision_points['y'] = [self.y, self.y+self.image.get_height()]
+            # # print(f'Player: {player_collision_points["x"]}')
+            # # print(f'Object: {[obj_left, obj_right]}')
+            #
+            # for point_x in player_collision_points['x']:
+            #     if obj_left < point_x < obj_right:
+            #         collision[0] = True
+            # for point_y in player_collision_points['y']:
+            #     if obj_top < point_y < obj_bottom:
+            #         collision[1] = True
+            # # print(collision)
+            # if collision[0] and collision[1]:
+            #     self.x_vel *= -1.2
+            #     self.y_vel *= -1.2
+            #
+            #     # self.x = 400
+            #     # self.y = 400
+            #     print("collision")
 
 
     def movement(self, HEIGHT, WIDTH):
@@ -202,8 +211,8 @@ class MainRun(object):
         self.HEIGHT = 800
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.world = World()
-        self.world.construct()
-        # self.world.load_objects_from_json('track1')
+        # self.world.construct()
+        self.world.load_objects_from_json('track1')
 
         self.player = Player(0, 0, 30, 30, world=self.world)
         self.clock = pygame.time.Clock()
