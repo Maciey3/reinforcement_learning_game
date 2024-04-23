@@ -12,7 +12,8 @@ class World_object(object):
     def draw(self, screen):
         pygame.draw.rect(screen, pygame.Color('black'), self.rectangle)
 
-class Start_line():
+
+class Start_line(object):
     def __init__(self, x, y, width, height):
         self.x = x
         self.y = y
@@ -26,7 +27,8 @@ class Start_line():
     def draw(self, screen):
         screen.blit(self.image, (self.x, self.y))
 
-class Finish_line():
+
+class Finish_line(object):
     def __init__(self, x, y, width, height):
         self.x = x
         self.y = y

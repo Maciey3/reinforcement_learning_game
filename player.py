@@ -4,15 +4,18 @@ from world_object import Start_line, Finish_line
 
 class Player(object):
     def __init__(self, x, y, width, height, world):
+        self.starting_x = x
+        self.starting_y = y
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-        self.image = pygame.image.load("images/game_arrow_cut.png")
-        self.image = pygame.transform.scale(self.image, (width, height))
+        self.image = pygame.transform.scale(pygame.image.load("images/game_arrow_cut.png"), (width, height))
+        self.sprite = self.image.subsurface(self.image.get_rect())
         self.x_vel = 0
         self.y_vel = 0
-        self.sprite = self.image.subsurface(self.image.get_rect())
+        self.collision_repair_delay = 300
+        self.collision_repaired_time = None
         self.world = world
 
     def render(self, screen):
@@ -24,11 +27,17 @@ class Player(object):
             2
         )
 
-    def key_handling(self, starting_vel, acceleration):
+    def key_handling(self, starting_vel, acceleration, current_time):
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_r]:
-            self.__init__(10, 10, 30, 30, self.world)
+            self.__init__(self.starting_x, self.starting_y, self.width, self.height, self.world)
+
+        if self.collision_repaired_time:
+            print(current_time, self.collision_repaired_time)
+            if current_time <= self.collision_repaired_time:
+                return
+            self.collision_repaired_time = None
 
         if keys[pygame.K_a]:
             if self.x_vel <= -starting_vel+1:
@@ -85,7 +94,7 @@ class Player(object):
             else:
                 self.y_vel += friction
 
-        print(f'Y velocity: {self.y_vel}   X velocity: {self.x_vel}')
+        # print(f'Y velocity: {self.y_vel}   X velocity: {self.x_vel}')
 
     def border_collision(self, HEIGHT, WIDTH):
         # TOP
@@ -108,19 +117,29 @@ class Player(object):
             self.x_vel = 0
             self.x = WIDTH - self.image.get_width()
 
-    def objects_collision(self):
+    def objects_collision(self, current_time):
         for world_object in self.world.objects_list:
             image_rect = pygame.Rect(self.x, self.y, self.image.get_width(), self.image.get_height())
             if isinstance(world_object, Start_line):
                 continue
             elif isinstance(world_object, Finish_line):
                 if image_rect.colliderect(world_object.rectangle):
+                    self.__init__(self.starting_x, self.starting_y, self.width, self.height, self.world)
                     print("Finish")
+
             # New Collision
             else:
                 if image_rect.colliderect(world_object.rectangle):
-                    self.x_vel *= -1.2
-                    self.y_vel *= -1.2
+                    print(image_rect.colliderect(world_object.rectangle))
+                    if self.collision_repaired_time:
+                        self.collision_repaired_time = current_time + self.collision_repair_delay
+
+                    # Have to check where the collision was
+                    # and change position +/- 1 or more of the wall
+                    # to avoid wall stuck
+
+                    self.x_vel *= 0
+                    self.y_vel *= -1.1
 
 
             # Old Collision
@@ -153,16 +172,20 @@ class Player(object):
             #     print("collision")
 
 
-    def movement(self, HEIGHT, WIDTH):
+    def movement(self, HEIGHT, WIDTH, current_time):
         starting_vel = 3
         acceleration = 0.8
         friction = 0.4
 
-        self.key_handling(starting_vel, acceleration)
+
+
+        self.key_handling(starting_vel, acceleration, current_time)
         self.friction_handler(friction)
+
+        self.border_collision(HEIGHT, WIDTH)
+        self.objects_collision(current_time)
 
         self.x += self.x_vel
         self.y += self.y_vel
 
-        self.border_collision(HEIGHT, WIDTH)
-        self.objects_collision()
+

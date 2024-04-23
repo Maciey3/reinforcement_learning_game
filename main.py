@@ -13,9 +13,14 @@ class Game(object):
         self.world = World()
         # self.world.construct()
         self.world.load_objects_from_json('track1')
-        # return
 
-        self.player = Player(0, 0, 30, 30, world=self.world)
+        self.player = Player(
+            (self.world.start_line_object.x + self.world.start_line_object.width - 30) // 2,
+            (self.world.start_line_object.y + self.world.start_line_object.height - 30) // 2,
+            30,
+            30,
+            world=self.world
+        )
         self.clock = pygame.time.Clock()
 
     def show_fps(self):
@@ -26,6 +31,7 @@ class Game(object):
 
     def run(self):
         run = True
+        timer = 0
         while run:
             self.screen.fill((255, 255, 255))
 
@@ -36,16 +42,14 @@ class Game(object):
 
             self.world.render(self.screen)
             self.player.render(self.screen)
-            self.player.movement(self.HEIGHT, self.WIDTH)
+            self.player.movement(self.HEIGHT, self.WIDTH, timer)
             self.show_fps()
 
             pygame.display.update()
-            self.clock.tick(self.FPS)
+            timer += self.clock.tick(self.FPS)
+            print(f"{timer//1000} s")
         pygame.quit()
 
 
-a = Game()
-a.run()
-
-# world = World()
-# world.load_objects_from_json('track1')
+game = Game()
+game.run()
