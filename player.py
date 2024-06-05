@@ -34,7 +34,7 @@ class Player(object):
             self.__init__(self.starting_x, self.starting_y, self.width, self.height, self.world)
 
         if self.collision_repaired_time:
-            print(current_time, self.collision_repaired_time)
+            # print(current_time, self.collision_repaired_time)
             if current_time <= self.collision_repaired_time:
                 return
             self.collision_repaired_time = None
@@ -130,54 +130,45 @@ class Player(object):
             # New Collision
             else:
                 if image_rect.colliderect(world_object.rectangle):
-                    print(image_rect.colliderect(world_object.rectangle))
-                    if self.collision_repaired_time:
+                    # print(image_rect.colliderect(world_object.rectangle))
+                    if not self.collision_repaired_time:
                         self.collision_repaired_time = current_time + self.collision_repair_delay
+
+                    overlap_left = image_rect.right - world_object.rectangle.left
+                    overlap_right = world_object.rectangle.right - image_rect.left
+                    overlap_top = image_rect.bottom - world_object.rectangle.top
+                    overlap_bottom = world_object.rectangle.bottom - image_rect.top
+
+                    min_overlap = min(overlap_left, overlap_right, overlap_top, overlap_bottom)
+
+                    if min_overlap == overlap_left:
+                        print("Collision on left side")
+                        self.x = world_object.rectangle.left - self.width
+                        self.x_vel *= -0.8
+                    elif min_overlap == overlap_right:
+                        print("Collision on right side")
+                        self.x = world_object.rectangle.right
+                        self.x_vel *= -0.8
+                    elif min_overlap == overlap_top:
+                        print("Collision on top side")
+                        self.y = world_object.rectangle.top - self.height
+                        self.y_vel *= -0.8
+                    elif min_overlap == overlap_bottom:
+                        print("Collision on bottom side")
+                        self.y = world_object.rectangle.bottom
+                        self.y_vel *= -0.8
 
                     # Have to check where the collision was
                     # and change position +/- 1 or more of the wall
                     # to avoid wall stuck
 
-                    self.x_vel *= 0
-                    self.y_vel *= -1.1
-
-
-            # Old Collision
-
-            # collision = [False, False]
-            # obj_left = world_object.rectangle.left
-            # obj_right = world_object.rectangle.right
-            # obj_top = world_object.rectangle.top
-            # obj_bottom = world_object.rectangle.bottom
-            #
-            # player_collision_points = {}
-            # player_collision_points['x'] = [self.x, self.x+self.image.get_width()]
-            # player_collision_points['y'] = [self.y, self.y+self.image.get_height()]
-            # # print(f'Player: {player_collision_points["x"]}')
-            # # print(f'Object: {[obj_left, obj_right]}')
-            #
-            # for point_x in player_collision_points['x']:
-            #     if obj_left < point_x < obj_right:
-            #         collision[0] = True
-            # for point_y in player_collision_points['y']:
-            #     if obj_top < point_y < obj_bottom:
-            #         collision[1] = True
-            # # print(collision)
-            # if collision[0] and collision[1]:
-            #     self.x_vel *= -1.2
-            #     self.y_vel *= -1.2
-            #
-            #     # self.x = 400
-            #     # self.y = 400
-            #     print("collision")
-
+                    # self.x_vel *= 0
+                    # self.y_vel *= 0
 
     def movement(self, HEIGHT, WIDTH, current_time):
         starting_vel = 3
         acceleration = 0.8
         friction = 0.4
-
-
 
         self.key_handling(starting_vel, acceleration, current_time)
         self.friction_handler(friction)
