@@ -1,22 +1,30 @@
 import pygame
 import json
+import numpy as np
 from player import Player
 from world import World
 from button import Button
+from agent import Agent
 pygame.init()
 pygame.font.init()
 
 
 class Game(object):
     def __init__(self):
-        self.FPS = 60
+        self.FPS = 300
         self.WIDTH = 800
         self.HEIGHT = 800
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.world = World()
-        self.track_name = 'track_easy'
+        self.track_name = 'track_center'
         self.world.load_objects_from_json(self.track_name)
         self.timer = 0
+
+        self.agent = Agent()
+        self.walls_distance_score = 0
+        self.finish_line_distance_reward = 0
+        self.score = 0
+        self.record = 0
 
         self.player_size = 30
         self.player = Player(
@@ -77,14 +85,15 @@ class Game(object):
             self.screen.blit(time_surface, time_rect)
 
     def get_game_info(self):
-        return [
+        return np.array([
             self.player.get_nearby_walls_info(self.WIDTH, self.HEIGHT),
             self.player.get_direction_info(),
-            self.player.get_finish_info()]
+            self.player.get_finish_info()], dtype=int).flatten()
 
     def run(self):
         run = True
         self.timer = 0
+        done = 0
         while run:
             self.screen.fill((255, 255, 255))
 
@@ -106,20 +115,47 @@ class Game(object):
                     run = False
                     break
 
+            state_old = self.get_game_info()
+            # print(state_old)
+            final_move = self.agent.get_action(state_old)
+
+            finish_line_distance_reward = self.player.get_finish_line_distance()
+            # print(finish_line_distance_reward)
             self.world.render(self.screen)
             self.player.render(self.screen)
-            # print(self.get_game_info())
             self.player.display_collision_lines(self.screen, self.WIDTH, self.HEIGHT)
-            if self.player.movement(self.HEIGHT, self.WIDTH, self.timer) == 1:
-                self.save_record(self.track_name, self.timer)
-                self.finish(self.timer)
+            # collision_type = self.player.movement(self.HEIGHT, self.WIDTH, self.timer)
+            collision_type = self.player.movement(self.HEIGHT, self.WIDTH, self.timer, move_list=final_move)
+            if collision_type in [1, 2, 3]:
+                # if collision_type == 2 or collision_type == 3:
+                #     self.score = finish_line_distance_reward
+                # else:
+                self.score = 1000 - float(format(round(self.timer/1000, 2), ".2f"))
+                    # self.score = finish_line_distance_reward
+                done = 1
+                self.agent.n_games += 1
+                self.agent.train_long_memory()
+                print(f'Game: {self.agent.n_games}, score: {self.score}, {finish_line_distance_reward}')
+                if self.score > self.record:
+                    self.record = self.score
+                    self.agent.model.save()
+
+                # self.__init__()
+                self.time = 0
+                self.run()
+                # self.save_record(self.track_name, self.timer)
+                # self.finish(self.timer)
 
             self.show_timer(self.timer)
             self.show_fps()
 
             pygame.display.update()
             self.timer += self.clock.tick(self.FPS)
-            # print(f"{round(self.timer/1000, 2)} s")
+
+            state_new = self.get_game_info()
+            self.agent.train_short_memory(state_old, final_move, finish_line_distance_reward, state_new, done)
+            self.agent.remember(state_old, final_move, finish_line_distance_reward, state_new, done)
+
         pygame.quit()
 
     def menu(self):
@@ -227,5 +263,6 @@ class Game(object):
             pygame.display.update()
         pygame.quit()
 
-# game = Game()
+game = Game()
+game.run()
 # game.menu()

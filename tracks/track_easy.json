@@ -1,0 +1,30 @@
+{
+    "objects": {
+        "start": {
+            "x": 0,
+            "y": 0,
+            "width": 50,
+            "height": 150
+        },
+        "finish": {
+            "x": 700,
+            "y": 460,
+            "width": 100,
+            "height": 40
+        },
+        "wall":[
+            {
+                "x": 0,
+                "y": 150,
+                "width": 700,
+                "height": 10
+            },
+            {
+                "x": 700,
+                "y": 150,
+                "width": 10,
+                "height": 650
+            }
+        ]
+    }
+}

@@ -3,7 +3,6 @@ import json
 from world_object import World_object, Start_line, Finish_line
 
 
-
 class World(object):
     def __init__(self):
         self.objects_list = []
