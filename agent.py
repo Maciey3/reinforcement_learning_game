@@ -50,7 +50,7 @@ class Agent:
         else:
             state0 = torch.tensor(state, dtype=torch.float)
             if load_from_model:
-                self.load_model(path='model/model.pth')
+                self.load_model(path='model/model_best.pth')
                 self.model.eval()
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
